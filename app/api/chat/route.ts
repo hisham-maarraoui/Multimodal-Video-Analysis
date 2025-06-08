@@ -25,6 +25,7 @@ function chunkTranscript(transcript: any[], chunkSize = 4) {
 export async function POST(req: NextRequest) {
   try {
     const { question, videoId, transcript } = await req.json();
+    console.log({ question, videoId, transcript }); // Debug log
     if (!question || !videoId || !transcript) {
       return new Response('Missing question, videoId, or transcript', { status: 400 });
     }
@@ -59,6 +60,7 @@ export async function POST(req: NextRequest) {
       topK: 5,
       vector: questionEmbedding,
       includeMetadata: true,
+      filter: { videoId },
     });
     console.log('Pinecone query results:', queryRes);
     const retrieved = queryRes.matches?.map((m: any) => m.metadata) || [];

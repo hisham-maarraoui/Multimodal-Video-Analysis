@@ -1,0 +1,107 @@
+import { useState } from 'react';
+import { formatTime } from '@/lib/utils';
+
+interface Segment {
+  startTime: number;
+  endTime: number;
+  description: string;
+}
+
+interface VideoSearchProps {
+  videoUrl: string;
+  onSeek: (time: number) => void;
+}
+
+export default function VideoSearch({ videoUrl, onSeek }: VideoSearchProps) {
+  const [query, setQuery] = useState('');
+  const [segments, setSegments] = useState<Segment[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSearch = async () => {
+    if (!query.trim()) return;
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const response = await fetch('/api/video-search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ videoUrl, query }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to search video');
+      }
+      
+      setSegments(data.segments);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="h-full flex flex-col bg-white/5 backdrop-blur-sm rounded-lg p-4">
+      <div className="mb-4">
+        <h2 className="text-xl font-semibold mb-2">Video Search</h2>
+        <div className="flex gap-2 min-w-0">
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search for moments in the video..."
+            className="flex-1 min-w-0 px-3 py-2 bg-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+          />
+          <button
+            onClick={handleSearch}
+            disabled={isLoading}
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+          >
+            {isLoading ? 'Searching...' : 'Search'}
+          </button>
+        </div>
+      </div>
+
+      {error && (
+        <div className="text-red-500 mb-4 p-2 bg-red-500/10 rounded-lg">
+          {error}
+        </div>
+      )}
+
+      <div className="flex-1 overflow-y-auto">
+        {segments.length > 0 ? (
+          <div className="space-y-3">
+            {segments.map((segment, index) => (
+              <div
+                key={index}
+                className="p-3 bg-white/5 rounded-lg hover:bg-white/10 cursor-pointer"
+                onClick={() => onSeek(segment.startTime)}
+              >
+                <div className="flex items-center gap-2 text-sm text-gray-400 mb-1">
+                  <span>{formatTime(segment.startTime)}</span>
+                  <span>→</span>
+                  <span>{formatTime(segment.endTime)}</span>
+                </div>
+                <p className="text-white">{segment.description}</p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center text-gray-400 mt-8">
+            {isLoading ? (
+              <div className="animate-pulse">Searching video...</div>
+            ) : (
+              'Enter a search query to find moments in the video'
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+} 

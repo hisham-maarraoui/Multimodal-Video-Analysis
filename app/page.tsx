@@ -2,6 +2,10 @@
 
 import { useState, useRef, useEffect } from 'react';
 import React from 'react';
+import VideoSearch from '@/components/VideoSearch';
+import Sections from '@/components/Sections';
+import Transcript from '@/components/Transcript';
+import Chat from '@/components/Chat';
 
 function decodeHtml(html: string) {
   const txt = document.createElement('textarea');
@@ -30,6 +34,9 @@ export default function Home() {
 
   const fetchTranscript = async () => {
     setLoading(true);
+    setChatHistory([]);
+    setChatInput('');
+    setChatLoading(false);
     setError('');
     setTranscript([]);
     setSections([]);
@@ -129,6 +136,18 @@ export default function Home() {
     setChatLoading(false);
   }
 
+  // Helper to format seconds as mm:ss or h:mm:ss
+  function formatTimestamp(seconds: number): string {
+    const sec = Math.floor(seconds % 60);
+    const min = Math.floor((seconds / 60) % 60);
+    const hr = Math.floor(seconds / 3600);
+    if (hr > 0) {
+      return `${hr}:${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+    } else {
+      return `${min}:${sec.toString().padStart(2, '0')}`;
+    }
+  }
+
   // Helper to highlight and link timestamps in chat answers
   function renderChatContent(content: string) {
     // Match [xx.xx s], [xx.xx s, yy.yy s], and [xx.xx s-yy.yy s]
@@ -153,14 +172,15 @@ export default function Home() {
       }
       times.forEach((t, i) => {
         if (i > 0) parts.push(', ');
+        const sec = Number(t);
         parts.push(
           <button
             key={(match ? match.index : 0) + '-' + t}
             className="text-blue-400 underline hover:text-blue-300 mx-0.5"
-            onClick={() => seekTo(Number(t))}
-            title={`Jump to ${t}s`}
+            onClick={() => seekTo(sec)}
+            title={`Jump to ${formatTimestamp(sec)}`}
           >
-            [{t}s]
+            [{formatTimestamp(sec)}]
           </button>
         );
       });
@@ -174,7 +194,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-neutral-900 via-neutral-950 to-blue-950 text-white flex flex-col items-center justify-center px-2 py-8">
-      <div className="w-full max-w-4xl flex flex-col items-center justify-center min-h-[60vh]">
+      <div className="w-full flex flex-col items-center justify-center min-h-[60vh]">
         <h1 className="text-3xl font-bold mb-2 text-center">Multimodal Video Analysis</h1>
         <p className="text-center text-neutral-300 mb-8 max-w-2xl mx-auto">
           Enter a YouTube video URL to unlock multimodal video analysis. This app fetches the transcript, generates a smart section breakdown, and enables semantic chat and timestamp navigation—all powered by Google AI. The chat uses Retrieval-Augmented Generation (RAG) for more accurate, context-aware answers from the video content.
@@ -215,103 +235,27 @@ export default function Home() {
         )}
         {/* Main content: Sections | Transcript | Chat */}
         {hasFetched && (
-          <div className="flex flex-col lg:flex-row gap-2 w-full justify-center items-stretch">
-            {/* Sections (left) */}
-            <div className="flex-1 max-w-xs min-w-0 bg-neutral-800 rounded-l-lg p-6 shadow-lg min-h-[200px] border-r border-neutral-700">
-              <h3 className="text-lg font-semibold mb-4">Sections</h3>
-              {loading ? (
-                <ul className="space-y-4 animate-pulse">
-                  {[...Array(3)].map((_, i) => (
-                    <li key={i} className="h-8 bg-neutral-700 rounded w-3/4 mx-auto" />
-                  ))}
-                </ul>
-              ) : sections.length > 0 ? (
-                <ul className="space-y-4">
-                  {sections.map((section, idx) => (
-                    <li key={idx}>
-                      <button
-                        className="text-blue-400 hover:underline font-bold text-base"
-                        onClick={() => seekTo(section.start)}
-                        title={`Jump to ${section.start}s`}
-                      >
-                        [{section.start}s] {decodeHtml(section.title)}
-                      </button>
-                      <div className="text-neutral-300 text-sm mt-1 ml-6">{decodeHtml(section.summary)}</div>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <div className="text-neutral-400">{sectionError ? sectionError : (hasFetched && !loading ? 'No sections available.' : '')}</div>
-              )}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1fr_1.2fr_1.3fr_1.3fr] gap-4 h-[calc(100vh-200px)]">
+            <div className="lg:col-span-1 min-w-0">
+              <Sections sections={sections} onSeek={seekTo} />
             </div>
-            {/* Transcript (center) */}
-            <div className="flex-1 min-w-0 bg-neutral-800 p-6 shadow-lg h-full min-h-[200px] border-r border-neutral-700 flex flex-col">
-              <h2 className="text-lg font-semibold mb-4">Transcript</h2>
-              {error && <div className="text-red-400 mb-2">{error}</div>}
-              <div className="flex-1 overflow-y-auto">
-                {loading ? (
-                  <ul className="space-y-2 animate-pulse">
-                    {[...Array(6)].map((_, i) => (
-                      <li key={i} className="h-5 bg-neutral-700 rounded w-full" />
-                    ))}
-                  </ul>
-                ) : (sections.length > 0 && transcript.length > 0) ? (
-                  <ul className="space-y-2">
-                    {transcript.map((item, idx) =>
-                      typeof item.start === 'number' && item.text ? (
-                        <li key={idx} className="flex items-start gap-2">
-                          <button
-                            className="text-blue-400 hover:underline font-mono text-sm min-w-fit"
-                            onClick={() => seekTo(item.start)}
-                            title={`Jump to ${item.start.toFixed(2)}s`}
-                          >
-                            [{item.start.toFixed(2)}s]
-                          </button>
-                          <span className="text-neutral-100 text-sm">{decodeHtml(item.text)}</span>
-                        </li>
-                      ) : null
-                    )}
-                  </ul>
-                ) : (
-                  <div className="text-neutral-400">{videoUrl && !loading && hasFetched ? 'No transcript available.' : ''}</div>
-                )}
-              </div>
+            <div className="lg:col-span-1 min-w-0">
+              <Transcript transcript={transcript} onSeek={seekTo} />
             </div>
-            {/* Chat (right) */}
-            {videoId && transcript.length > 0 && (
-              <div className="flex-1 max-w-xl min-w-0 bg-neutral-800 rounded-r-lg p-6 shadow-lg flex flex-col">
-                <h3 className="text-lg font-semibold mb-4">Chat with the Video</h3>
-                <form onSubmit={handleChatSubmit} className="flex gap-2 w-full items-stretch mb-4">
-                  <input
-                    type="text"
-                    className="flex-1 rounded-md px-4 py-2 bg-neutral-700 text-white placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    placeholder="Ask a question..."
-                    value={chatInput}
-                    onChange={e => setChatInput(e.target.value)}
-                    disabled={chatLoading}
-                  />
-                  <button
-                    type="submit"
-                    disabled={chatLoading || !chatInput.trim()}
-                    className="rounded-md px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-neutral-700 disabled:cursor-not-allowed text-white font-semibold transition"
-                    style={{ minWidth: 80 }}
-                  >
-                    {chatLoading ? '...' : 'Send'}
-                  </button>
-                </form>
-                <div className="space-y-2 flex-1 overflow-y-auto">
-                  {chatHistory.length === 0 && (
-                    <div className="text-neutral-400">Ask a question about the video transcript or its content.</div>
-                  )}
-                  {chatHistory.map((msg, idx) => (
-                    <div key={idx} className={msg.role === 'user' ? 'text-blue-300 text-right' : 'text-green-300 text-left'}>
-                      <span className="whitespace-pre-line">{msg.role === 'assistant' ? renderChatContent(msg.content) : msg.content}</span>
-                    </div>
-                  ))}
-                  <div ref={chatEndRef} />
-                </div>
-              </div>
-            )}
+            <div className="lg:col-span-1 min-w-0">
+              <Chat
+                videoId={videoId}
+                transcript={transcript}
+                onSeek={seekTo}
+                isDisabled={loading}
+              />
+            </div>
+            <div className="lg:col-span-1 min-w-0">
+              <VideoSearch
+                videoUrl={videoUrl}
+                onSeek={seekTo}
+              />
+            </div>
           </div>
         )}
       </div>
