@@ -1,11 +1,11 @@
 # Multimodal Video Analysis
 
-This app lets you analyze any YouTube video with state-of-the-art AI:
+This app lets you analyze any YouTube video with advanced AI:
 
 - **Transcript extraction**
 - **AI-powered section breakdown**
 - **Semantic chat with Retrieval-Augmented Generation (RAG)**
-- **Visual search using CLIP embeddings**
+- **Natural language video search**
 - **Timestamp navigation**
 
 ## Features
@@ -13,13 +13,13 @@ This app lets you analyze any YouTube video with state-of-the-art AI:
 - Enter a YouTube URL to fetch the transcript
 - Get a smart, clickable section breakdown
 - Chat with the video using RAG (context-aware answers, with timestamp citations)
-- Search for specific moments using both semantic and visual search
+- Search for specific moments in the video using natural language queries
 - Clickable timestamps in both transcript and chat
 - Modern, responsive UI
 
 ## Powered by
 
-- AI Models (CLIP for visual search, LLM for semantic understanding)
+- AI Models (LLM for semantic understanding and search)
 - Pinecone (vector database for RAG)
 - Redis (caching)
 - Next.js, Tailwind CSS, React
