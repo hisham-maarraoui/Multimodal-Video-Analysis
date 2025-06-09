@@ -17,6 +17,7 @@ export default function VideoSearch({ videoUrl, onSeek }: VideoSearchProps) {
   const [segments, setSegments] = useState<Segment[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [source, setSource] = useState<string | null>(null);
 
   const handleSearch = async () => {
     if (!query.trim()) return;
@@ -28,7 +29,7 @@ export default function VideoSearch({ videoUrl, onSeek }: VideoSearchProps) {
       const response = await fetch('/api/video-search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ videoUrl, query }),
+        body: JSON.stringify({ videoUrl, query, forceImageRag: false }),
       });
       
       const data = await response.json();
@@ -38,8 +39,10 @@ export default function VideoSearch({ videoUrl, onSeek }: VideoSearchProps) {
       }
       
       setSegments(data.segments);
+      setSource(data.source || null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
+      setSource(null);
     } finally {
       setIsLoading(false);
     }
@@ -71,6 +74,12 @@ export default function VideoSearch({ videoUrl, onSeek }: VideoSearchProps) {
       {error && (
         <div className="text-red-500 mb-4 p-2 bg-red-500/10 rounded-lg">
           {error}
+        </div>
+      )}
+
+      {source && (
+        <div className="text-xs text-gray-400 mb-2">
+          Results source: <span className="font-mono">{source === 'gemini' ? 'AI (semantic search)' : 'CLIP (visual search)'}</span>
         </div>
       )}
 

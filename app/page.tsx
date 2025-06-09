@@ -197,7 +197,7 @@ export default function Home() {
       <div className="w-full flex flex-col items-center justify-center min-h-[60vh]">
         <h1 className="text-3xl font-bold mb-2 text-center">Multimodal Video Analysis</h1>
         <p className="text-center text-neutral-300 mb-8 max-w-2xl mx-auto">
-          Enter a YouTube video URL to unlock multimodal video analysis. This app fetches the transcript, generates a smart section breakdown, and enables semantic chat and timestamp navigation—all powered by Google AI. The chat uses Retrieval-Augmented Generation (RAG) for more accurate, context-aware answers from the video content.
+          Enter a YouTube video URL to analyze its content with advanced AI. This app fetches the transcript, generates a smart section breakdown, enables semantic chat, and lets you search for specific moments in the video using natural language queries. All results include clickable timestamps for easy navigation.
         </p>
         <form
           className="flex flex-col sm:flex-row items-center justify-center gap-2 mb-8 w-full max-w-xl"

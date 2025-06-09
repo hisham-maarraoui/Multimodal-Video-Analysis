@@ -50,7 +50,13 @@ export default function Chat({ videoId, transcript, onSeek, isDisabled }: ChatPr
       });
 
       if (!response.ok) {
-        throw new Error('Failed to get response');
+        let errorMsg = 'Failed to get response';
+        try {
+          const errJson = await response.json();
+          errorMsg = errJson.error || errorMsg;
+          if (errJson.details) errorMsg += `\nDetails: ${errJson.details}`;
+        } catch {}
+        throw new Error(errorMsg);
       }
 
       const reader = response.body?.getReader();
@@ -79,17 +85,17 @@ export default function Chat({ videoId, transcript, onSeek, isDisabled }: ChatPr
       console.error('Chat error:', error);
       setChatHistory(prev => [
         ...prev,
-        { role: 'assistant', content: 'Sorry, I encountered an error. Please try again.' }
+        { role: 'assistant', content: error instanceof Error ? error.message : 'Sorry, I encountered an error. Please try again.' }
       ]);
     } finally {
       setChatLoading(false);
     }
   };
 
-  // Updated: Match [123.45s] and [h:mm:ss] and make clickable
+  // Updated: Match [123.45s], [h:mm:ss], and also ranges/lists like [23.68s-27.28s, 49.68s, 51.36s]
   const renderChatContent = (content: string) => {
-    // Regex for [123.45s] and [h:mm:ss]
-    const regex = /\[(\d+(?:\.\d+)?s|\d{1,2}:\d{2}(?::\d{2})?)\]/g;
+    // Regex for [ ... ] with numbers, s, commas, dashes, and colons
+    const regex = /\[((?:[\d:.]+s?(?:\s*[-,]\s*)?)+)\]/g;
     let lastIndex = 0;
     const parts: (string | JSX.Element)[] = [];
     let match: RegExpExecArray | null;
@@ -97,29 +103,39 @@ export default function Chat({ videoId, transcript, onSeek, isDisabled }: ChatPr
       if (match.index > lastIndex) {
         parts.push(content.slice(lastIndex, match.index));
       }
-      let seconds = 0;
-      if (match[1].endsWith('s')) {
-        // [123.45s] format
-        seconds = parseFloat(match[1].replace('s', ''));
-      } else {
-        // [h:mm:ss] or [mm:ss] format
-        const timeParts = match[1].split(':').map(Number);
-        if (timeParts.length === 3) {
-          seconds = timeParts[0] * 3600 + timeParts[1] * 60 + timeParts[2];
-        } else if (timeParts.length === 2) {
-          seconds = timeParts[0] * 60 + timeParts[1];
+      // Split by comma or dash, keep delimiters
+      const inner = match[1];
+      const tokens = inner.split(/(,|\-|–)/);
+      tokens.forEach((token, i) => {
+        const trimmed = token.trim();
+        if (trimmed === ',' || trimmed === '-' || trimmed === '–') {
+          parts.push(trimmed);
+        } else if (trimmed) {
+          let seconds = 0;
+          if (trimmed.endsWith('s')) {
+            seconds = parseFloat(trimmed.replace('s', ''));
+          } else if (trimmed.includes(':')) {
+            const timeParts = trimmed.split(':').map(Number);
+            if (timeParts.length === 3) {
+              seconds = timeParts[0] * 3600 + timeParts[1] * 60 + timeParts[2];
+            } else if (timeParts.length === 2) {
+              seconds = timeParts[0] * 60 + timeParts[1];
+            }
+          } else if (!isNaN(Number(trimmed))) {
+            seconds = Number(trimmed);
+          }
+          parts.push(
+            <button
+              key={match.index + '-' + i}
+              className="text-blue-400 underline hover:text-blue-300 mx-0.5"
+              onClick={() => onSeek(seconds)}
+              title={`Jump to ${formatTimestamp(seconds)}`}
+            >
+              [{formatTimestamp(seconds)}]
+            </button>
+          );
         }
-      }
-      parts.push(
-        <button
-          key={match.index}
-          className="text-blue-400 underline hover:text-blue-300 mx-0.5"
-          onClick={() => onSeek(seconds)}
-          title={`Jump to ${formatTimestamp(seconds)}`}
-        >
-          [{formatTimestamp(seconds)}]
-        </button>
-      );
+      });
       lastIndex = regex.lastIndex;
     }
     if (lastIndex < content.length) {

@@ -10,6 +10,15 @@ interface TranscriptProps {
   onSeek: (time: number) => void;
 }
 
+function decodeHtml(html: string) {
+  return html
+    .replace(/&#39;/g, "'")
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>');
+}
+
 export default function Transcript({ transcript, onSeek }: TranscriptProps) {
   return (
     <div className="h-full flex flex-col bg-white/5 backdrop-blur-sm rounded-lg p-4">
@@ -26,7 +35,7 @@ export default function Transcript({ transcript, onSeek }: TranscriptProps) {
                 >
                   [{formatTimestamp(item.start)}]
                 </button>
-                <span className="text-neutral-100 text-sm">{item.text}</span>
+                <span className="text-neutral-100 text-sm">{decodeHtml(item.text)}</span>
               </li>
             ))}
           </ul>
