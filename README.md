@@ -5,7 +5,7 @@ This app lets you analyze any YouTube video with advanced AI:
 - **Transcript extraction**
 - **AI-powered section breakdown**
 - **Semantic chat with Retrieval-Augmented Generation (RAG)**
-- **Natural language video search (not currently working properly) **
+- **Natural language video search** (not currently working properly)
 - **Timestamp navigation**
 
 ## Features
