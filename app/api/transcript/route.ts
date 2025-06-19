@@ -99,7 +99,7 @@ export async function POST(req: NextRequest) {
         execFile('yt-dlp', [
           '--list-subs',
           url
-        ], (error, stdout, stderr) => {
+        ], (error: Error | null, stdout: string, stderr: string) => {
           if (error) {
             resolve(stdout + stderr); // still resolve, just log
           } else {
@@ -133,7 +133,7 @@ export async function POST(req: NextRequest) {
           '--skip-download',
           '-o', `/tmp/${videoId}.%(lang)s.%(ext)s`,
           url
-        ], (error, stdout, stderr) => {
+        ], (error: Error | null, stdout: string, stderr: string) => {
           ytDlpStdout = stdout;
           ytDlpStderr = stderr;
           if (error) {
@@ -176,7 +176,7 @@ export async function POST(req: NextRequest) {
             '--skip-download',
             '-o', `/tmp/${videoId}.%(lang)s.%(ext)s`,
             url
-          ], (error, stdout, stderr) => {
+          ], (error: Error | null, stdout: string, stderr: string) => {
             ytDlpStdout = stdout;
             ytDlpStderr = stderr;
             resolve(stdout + stderr);
