@@ -4,7 +4,6 @@ import { spawn } from 'child_process';
 import { pipeline } from 'stream/promises';
 import { CLIPModel, CLIPTokenizer } from '@xenova/transformers';
 import { pipeline as xenovaPipeline } from '@xenova/transformers';
-import ffmpeg from '@ffmpeg-installer/ffmpeg';
 
 // Global pipeline cache for speed
 let cachedImagePipeline: any = null;
@@ -27,20 +26,27 @@ export async function downloadYouTubeVideo(youtubeUrl: string, outputPath: strin
 
 // Extract frames from a video file using ffmpeg
 export async function extractFrames(videoPath: string, outputDir: string, fps = 1): Promise<string[]> {
-  return new Promise((resolve, reject) => {
-    if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
-    const args = ['-i', videoPath, '-vf', `fps=${fps}`, path.join(outputDir, 'frame-%04d.jpg')];
-    const ffmpegProcess = spawn(ffmpeg.path, args);
-    ffmpegProcess.on('close', (code) => {
-      if (code === 0) {
-        const files = fs.readdirSync(outputDir)
-          .filter(f => f.endsWith('.jpg'))
-          .map(f => path.join(outputDir, f));
-        resolve(files);
-      } else {
-        reject(new Error('ffmpeg failed'));
-      }
-    });
+  return new Promise(async (resolve, reject) => {
+    try {
+      // Dynamically import ffmpeg only when needed
+      const ffmpeg = require('@ffmpeg-installer/ffmpeg');
+      
+      if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
+      const args = ['-i', videoPath, '-vf', `fps=${fps}`, path.join(outputDir, 'frame-%04d.jpg')];
+      const ffmpegProcess = spawn(ffmpeg.path, args);
+      ffmpegProcess.on('close', (code) => {
+        if (code === 0) {
+          const files = fs.readdirSync(outputDir)
+            .filter(f => f.endsWith('.jpg'))
+            .map(f => path.join(outputDir, f));
+          resolve(files);
+        } else {
+          reject(new Error('ffmpeg failed'));
+        }
+      });
+    } catch (error) {
+      reject(new Error(`Failed to load ffmpeg: ${error}`));
+    }
   });
 }
 
