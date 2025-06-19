@@ -31,14 +31,40 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No transcript available for this video' }, { status: 404 });
     }
 
-    // Get the first available transcript track
-    const firstTrack = transcriptData.tracks[0];
-    if (!firstTrack.transcript || firstTrack.transcript.length === 0) {
+    console.log('Available languages:', transcriptData.languages);
+    console.log('Available tracks:', transcriptData.tracks.length);
+
+    // Find the best transcript track with language preference
+    let selectedTrack = null;
+    let selectedLanguage = null;
+    
+    // Priority 1: Look for English tracks (en, en-US, en-GB, etc.)
+    for (const track of transcriptData.tracks) {
+      const langCode = track.language?.toLowerCase() || '';
+      if (langCode.includes('english') || langCode.startsWith('en')) {
+        selectedTrack = track;
+        selectedLanguage = transcriptData.languages.find((lang: any) => 
+          lang.languageCode.toLowerCase().startsWith('en') || 
+          lang.label.toLowerCase().includes('english')
+        );
+        console.log('Selected English track:', track.language);
+        break;
+      }
+    }
+    
+    // Priority 2: If no English track, use the first available track
+    if (!selectedTrack && transcriptData.tracks.length > 0) {
+      selectedTrack = transcriptData.tracks[0];
+      selectedLanguage = transcriptData.languages[0];
+      console.log('No English track found, using first available:', selectedTrack.language);
+    }
+
+    if (!selectedTrack || !selectedTrack.transcript || selectedTrack.transcript.length === 0) {
       return NextResponse.json({ error: 'No transcript content available' }, { status: 404 });
     }
 
     // Convert the transcript data to the expected format
-    const cues: TranscriptCue[] = firstTrack.transcript.map((item: any) => {
+    const cues: TranscriptCue[] = selectedTrack.transcript.map((item: any) => {
       const start = parseFloat(item.start);
       const duration = parseFloat(item.dur);
       return {
@@ -48,14 +74,17 @@ export async function POST(request: NextRequest) {
       };
     });
 
-    console.log(`Successfully extracted ${cues.length} transcript cues`);
+    console.log(`Successfully extracted ${cues.length} transcript cues in ${selectedLanguage?.label || 'unknown language'}`);
 
     return NextResponse.json({ 
       transcript: cues,
       videoId,
       source: 'youtube-transcript-api',
-      language: firstTrack.language,
-      title: transcriptData.title
+      language: selectedLanguage?.label || 'Unknown',
+      languageCode: selectedLanguage?.languageCode || 'unknown',
+      title: transcriptData.title,
+      availableLanguages: transcriptData.languages,
+      isEnglish: selectedLanguage?.languageCode?.toLowerCase().startsWith('en') || false
     });
 
   } catch (error: any) {
