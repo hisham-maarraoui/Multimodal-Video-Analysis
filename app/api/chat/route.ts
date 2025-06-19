@@ -98,7 +98,11 @@ export async function POST(req: NextRequest) {
       filter: { videoId },
     });
     console.log('Pinecone query results:', queryRes);
-    const retrieved = queryRes.matches?.map((m: { metadata: { text: string } }) => m.metadata) || [];
+    const retrieved = queryRes.matches
+      ? queryRes.matches
+          .map(m => m.metadata)
+          .filter((meta): meta is { text: string } => !!meta && typeof meta.text === 'string')
+      : [];
     // 7. Build context prompt
     const context = retrieved.map((c: { text: string }) => c.text).join('\n');
     console.log('Context sent to Google AI:', context);
