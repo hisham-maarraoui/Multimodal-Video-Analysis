@@ -101,6 +101,7 @@ export default function Chat({ videoId, transcript, onSeek, isDisabled }: ChatPr
       }
       // Split by comma or dash, keep delimiters
       const inner = match[1];
+      const matchIndex = match.index; // Store the index before forEach
       const tokens = inner.split(/(,|\-|–)/);
       tokens.forEach((token, i) => {
         const trimmed = token.trim();
@@ -122,7 +123,7 @@ export default function Chat({ videoId, transcript, onSeek, isDisabled }: ChatPr
           }
           parts.push(
             <button
-              key={match.index + '-' + i}
+              key={matchIndex + '-' + i}
               className="text-blue-400 underline hover:text-blue-300 mx-0.5"
               onClick={() => onSeek(seconds)}
               title={`Jump to ${formatTimestamp(seconds)}`}
