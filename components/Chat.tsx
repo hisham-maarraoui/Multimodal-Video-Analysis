@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { formatTimestamp } from '@/lib/utils';
+import { TranscriptCue } from '@/lib/types';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -8,7 +9,7 @@ interface ChatMessage {
 
 interface ChatProps {
   videoId: string;
-  transcript: any[];
+  transcript: TranscriptCue[];
   onSeek: (time: number) => void;
   isDisabled: boolean;
 }

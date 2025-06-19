@@ -3,6 +3,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { getCache, setCache } from '../utils/redis';
 import { getPineconeIndex } from '../utils/pinecone';
 import { embedTexts } from '../utils/embedding';
+import { TranscriptCue } from '@/lib/types';
 
 const GOOGLE_AI_API_KEY = process.env.GOOGLE_AI_API_KEY;
 const PINECONE_INDEX = process.env.PINECONE_INDEX || 'video-transcripts';
@@ -14,13 +15,13 @@ const GEMINI_MODELS = [
   'gemini-2.0-flash-exp',
 ];
 
-function chunkTranscript(transcript: any[], chunkSize = 4) {
+function chunkTranscript(transcript: TranscriptCue[], chunkSize = 4) {
   // If transcript is very short, use chunkSize=1
   if (transcript.length > 0 && transcript.length < chunkSize) chunkSize = 1;
   const chunks = [];
   for (let i = 0; i < transcript.length; i += chunkSize) {
     const group = transcript.slice(i, i + chunkSize);
-    const text = group.map((item: any) => `[${item.start?.toFixed(2)}s] ${item.text}`).join(' ');
+    const text = group.map((item: TranscriptCue) => `[${item.start?.toFixed(2)}s] ${item.text}`).join(' ');
     chunks.push({
       text,
       start: group[0]?.start || 0,
@@ -71,11 +72,11 @@ export async function POST(req: NextRequest) {
       console.log('No cache found for videoId, chunking and embedding transcript.');
       chunks = chunkTranscript(transcript);
       console.log('Transcript chunks:', chunks);
-      chunkEmbeddings = await embedTexts(chunks.map((c: any) => c.text));
+      chunkEmbeddings = await embedTexts(chunks.map((c: { text: string }) => c.text));
       // 3. Upsert to Pinecone
       const index = getPineconeIndex(PINECONE_INDEX);
       await index.upsert(
-        chunks.map((chunk: any, i: number) => ({
+        chunks.map((chunk: { text: string }, i: number) => ({
           id: `${videoId}-chunk-${i}`,
           values: chunkEmbeddings[i],
           metadata: { text: chunk.text, start: chunk.start, end: chunk.end, videoId },
@@ -98,9 +99,9 @@ export async function POST(req: NextRequest) {
       filter: { videoId },
     });
     console.log('Pinecone query results:', queryRes);
-    const retrieved = queryRes.matches?.map((m: any) => m.metadata) || [];
+    const retrieved = queryRes.matches?.map((m: { metadata: { text: string } }) => m.metadata) || [];
     // 7. Build context prompt
-    const context = retrieved.map((c: any) => c.text).join('\n');
+    const context = retrieved.map((c: { text: string }) => c.text).join('\n');
     console.log('Context sent to Google AI:', context);
     if (!context.trim()) {
       console.warn('No relevant transcript context found for this video.', { videoId, question });

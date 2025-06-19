@@ -7,6 +7,7 @@ import Sections from '@/components/Sections';
 import Transcript from '@/components/Transcript';
 import Chat from '@/components/Chat';
 import Skeleton from '@/components/Skeleton';
+import { TranscriptCue } from '@/lib/types';
 
 function decodeHtml(html: string) {
   const txt = document.createElement('textarea');
@@ -21,7 +22,7 @@ function getYouTubeId(url: string) {
 
 export default function Home() {
   const [videoUrl, setVideoUrl] = useState('');
-  const [transcript, setTranscript] = useState<any[]>([]);
+  const [transcript, setTranscript] = useState<TranscriptCue[]>([]);
   const [sections, setSections] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');

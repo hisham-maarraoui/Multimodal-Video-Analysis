@@ -4,6 +4,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import vttToJson from 'vtt-to-json';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { TranscriptCue } from '@/lib/types';
 
 const GOOGLE_AI_API_KEY = process.env.GOOGLE_AI_API_KEY;
 const GEMINI_MODELS = [
@@ -52,9 +53,9 @@ function getYouTubeId(url: string): string | null {
 }
 
 // Helper: remove near-duplicates, rolling/overlapping cues, and stop phrases
-function smartDedup(transcript: any[]) {
+function smartDedup(transcript: TranscriptCue[]) {
   // No stop phrase filtering; keep all greetings/blessings
-  const deduped: any[] = [];
+  const deduped: TranscriptCue[] = [];
   for (let i = 0; i < transcript.length; i++) {
     const text = transcript[i].text.trim();
     const textLower = text.toLowerCase();
@@ -148,7 +149,7 @@ export async function POST(req: NextRequest) {
       // If no cues, use custom regex-based parser
       if (!cues || cues.length === 0) {
         if (vttData) {
-          const fallbackCues: any[] = [];
+          const fallbackCues: TranscriptCue[] = [];
           const cueRegex = /(\d{2}:\d{2}:\d{2}\.\d{3}) --> (\d{2}:\d{2}:\d{2}\.\d{3})[^\n]*\n([\s\S]*?)(?=\n\d{2}:\d{2}:\d{2}\.\d{3}|$)/g;
           function timeToSeconds(t: string) {
             const [h, m, s] = t.split(':');
@@ -193,7 +194,7 @@ export async function POST(req: NextRequest) {
           cues = await vttToJson(vttPath);
           if (!cues || cues.length === 0) {
             if (vttData) {
-              const fallbackCues: any[] = [];
+              const fallbackCues: TranscriptCue[] = [];
               const cueRegex = /(\d{2}:\d{2}:\d{2}\.\d{3}) --> (\d{2}:\d{2}:\d{2}\.\d{3})[^\n]*\n([\s\S]*?)(?=\n\d{2}:\d{2}:\d{2}\.\d{3}|$)/g;
               function timeToSeconds(t: string) {
                 const [h, m, s] = t.split(':');
@@ -232,9 +233,9 @@ export async function POST(req: NextRequest) {
     for (let i = 0; i < cues.length; i += batchSize) {
       batches.push(cues.slice(i, i + batchSize));
     }
-    let allCleaned: any[] = [];
+    let allCleaned: TranscriptCue[] = [];
     for (const batch of batches) {
-      const compactCues = batch.map((cue: any) => ({
+      const compactCues = batch.map((cue: TranscriptCue) => ({
         start: cue.start,
         end: cue.end,
         text: cue.partials ? cue.partials.join(' ') : cue.text,
@@ -253,14 +254,14 @@ export async function POST(req: NextRequest) {
       try {
         let cleaned = JSON.parse(text);
         // Final consecutive deduplication within batch
-        cleaned = cleaned.filter((item: any, idx: number, arr: any[]) => idx === 0 || item.text !== arr[idx - 1].text);
+        cleaned = cleaned.filter((item: TranscriptCue, idx: number, arr: TranscriptCue[]) => idx === 0 || item.text !== arr[idx - 1].text);
         allCleaned = allCleaned.concat(cleaned);
       } catch (err) {
         return NextResponse.json({ error: 'Failed to parse Gemini response as JSON', raw: text, prompt, cues: compactCues, details: String(err) }, { status: 500 });
       }
     }
     // Final deduplication across all batches
-    allCleaned = allCleaned.filter((item: any, idx: number, arr: any[]) => idx === 0 || item.text !== arr[idx - 1].text);
+    allCleaned = allCleaned.filter((item: TranscriptCue, idx: number, arr: TranscriptCue[]) => idx === 0 || item.text !== arr[idx - 1].text);
     return NextResponse.json({ transcript: allCleaned, note: 'LLM-cleaned transcript (chunked)', cues });
   } catch (err) {
     return NextResponse.json({ error: 'Failed to fetch or parse VTT', details: String(err) }, { status: 500 });
