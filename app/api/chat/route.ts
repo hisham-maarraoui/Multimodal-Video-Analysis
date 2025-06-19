@@ -39,9 +39,8 @@ async function tryGeminiModels(prompt: string) {
       const model = genAI.getGenerativeModel({ model: modelName });
       const stream = await model.generateContentStream(prompt);
       return stream; // Success!
-    } catch (err: any) {
-      // Only try next model on rate limit or model-specific errors
-      if (err?.status === 429 || err?.status === 403 || err?.status === 404) {
+    } catch (err: unknown) {
+      if (typeof err === 'object' && err && 'status' in err && (err as any).status && ((err as any).status === 429 || (err as any).status === 403 || (err as any).status === 404)) {
         continue;
       } else {
         throw err;
@@ -114,7 +113,7 @@ export async function POST(req: NextRequest) {
     let stream;
     try {
       stream = await tryGeminiModels(prompt);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('All Gemini models failed:', err);
       return new Response(JSON.stringify({ error: 'All Gemini models failed due to rate limiting or errors.', details: String(err) }), { status: 500, headers: { 'Content-Type': 'application/json' } });
     }
@@ -131,8 +130,8 @@ export async function POST(req: NextRequest) {
     return new Response(readable, {
       headers: { 'Content-Type': 'text/plain; charset=utf-8' },
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('RAG chat error:', err);
-    return new Response(JSON.stringify({ error: 'RAG chat error', details: err?.message || String(err) }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+    return new Response(JSON.stringify({ error: 'RAG chat error', details: (err as Error)?.message || String(err) }), { status: 500, headers: { 'Content-Type': 'application/json' } });
   }
 } 

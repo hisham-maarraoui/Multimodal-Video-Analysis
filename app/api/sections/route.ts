@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { TranscriptCue } from '@/lib/types';
 
 const GOOGLE_AI_API_KEY = process.env.GOOGLE_AI_API_KEY;
 
@@ -15,7 +16,7 @@ export async function POST(req: NextRequest) {
 
   // Prepare the transcript as a single string for Google AI
   const transcriptText = transcript
-    .map((item: any) => `[${item.start?.toFixed(2)}s] ${item.text}`)
+    .map((item: TranscriptCue) => `[${item.start?.toFixed(2)}s] ${item.text}`)
     .join('\n');
 
   const prompt = `Given the following video transcript, break it down into clear sections. For each section, provide:
@@ -41,7 +42,7 @@ Return the result as a JSON array of objects with keys: title, summary, start.`;
     if (jsonStart !== -1 && jsonEnd !== -1) {
       try {
         sections = JSON.parse(text.slice(jsonStart, jsonEnd));
-      } catch (e) {
+      } catch (e: unknown) {
         return NextResponse.json({ error: 'Failed to parse Google AI response', details: text }, { status: 500 });
       }
     } else {
