@@ -9,6 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "@ffprobe-installer/ffprobe": "^2.1.2",
     "@google/generative-ai": "^0.24.1",
     "@pinecone-database/pinecone": "^6.1.0",
     "@xenova/transformers": "^2.17.2",
@@ -20,7 +22,7 @@
     "subtitle": "^4.2.2-alpha.0",
     "vtt-to-json": "^0.1.1",
     "youtube-captions-scraper": "^2.0.3",
-    "youtube-transcript": "^1.2.1"
+    "youtube-transcript-api": "^3.0.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

@@ -4,6 +4,7 @@ import { spawn } from 'child_process';
 import { pipeline } from 'stream/promises';
 import { CLIPModel, CLIPTokenizer } from '@xenova/transformers';
 import { pipeline as xenovaPipeline } from '@xenova/transformers';
+import ffmpeg from '@ffmpeg-installer/ffmpeg';
 
 // Global pipeline cache for speed
 let cachedImagePipeline: any = null;
@@ -29,8 +30,8 @@ export async function extractFrames(videoPath: string, outputDir: string, fps = 
   return new Promise((resolve, reject) => {
     if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
     const args = ['-i', videoPath, '-vf', `fps=${fps}`, path.join(outputDir, 'frame-%04d.jpg')];
-    const ffmpeg = spawn('ffmpeg', args);
-    ffmpeg.on('close', (code) => {
+    const ffmpegProcess = spawn(ffmpeg.path, args);
+    ffmpegProcess.on('close', (code) => {
       if (code === 0) {
         const files = fs.readdirSync(outputDir)
           .filter(f => f.endsWith('.jpg'))
