@@ -1,13 +1,12 @@
 # Multimodal Video Analysis (with Google AI RAG)
 
-This app lets you analyze any YouTube video with state-of-the-art AI:
+This app lets you analyze YouTube videos with AI:
 
 - **Transcript extraction**
 - **LLM-powered section breakdown**
 - **Semantic chat with Retrieval-Augmented Generation (RAG)**
 - **Natural language video search** (not currently working properly)
 - **Timestamp navigation**
-- **Powered by AI**
 
 ## Features
 
