@@ -74,8 +74,7 @@ export async function embedTextCLIP(query: string): Promise<Float32Array> {
   if (!cachedTextPipeline) {
     cachedTextPipeline = await xenovaPipeline(
       'feature-extraction',
-      'Xenova/clip-vit-base-patch16',
-      { tokenizer: 'Xenova/clip-vit-base-patch16' }
+      'Xenova/clip-vit-base-patch16'
     );
   }
   const model = cachedTextPipeline;
