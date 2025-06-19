@@ -93,7 +93,7 @@ export default function Chat({ videoId, transcript, onSeek, isDisabled }: ChatPr
     // Regex for [ ... ] with numbers, s, commas, dashes, and colons
     const regex = /\[((?:[\d:.]+s?(?:\s*[-,]\s*)?)+)\]/g;
     let lastIndex = 0;
-    const parts: (string | JSX.Element)[] = [];
+    const parts: (string | React.ReactElement)[] = [];
     let match: RegExpExecArray | null;
     while ((match = regex.exec(content)) !== null) {
       if (match.index > lastIndex) {
