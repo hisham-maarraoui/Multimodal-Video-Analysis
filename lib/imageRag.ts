@@ -49,8 +49,7 @@ export async function embedImagesCLIP(imagePaths: string[]): Promise<Float32Arra
   if (!cachedImagePipeline) {
     cachedImagePipeline = await xenovaPipeline(
       'image-feature-extraction',
-      'Xenova/clip-vit-base-patch16',
-      { feature_extractor: 'Xenova/clip-vit-base-patch16' }
+      'Xenova/clip-vit-base-patch16'
     );
   }
   const model = cachedImagePipeline;
