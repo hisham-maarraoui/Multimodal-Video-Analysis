@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
       // 3. Upsert to Pinecone
       const index = getPineconeIndex(PINECONE_INDEX);
       await index.upsert(
-        chunks.map((chunk: { text: string }, i: number) => ({
+        chunks.map((chunk: { text: string; start: number; end: number }, i: number) => ({
           id: `${videoId}-chunk-${i}`,
           values: chunkEmbeddings[i],
           metadata: { text: chunk.text, start: chunk.start, end: chunk.end, videoId },
