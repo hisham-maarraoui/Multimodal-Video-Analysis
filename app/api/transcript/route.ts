@@ -5,6 +5,8 @@ import { youtube } from '@/lib/youtube';
 import { youtube_v3 } from 'googleapis';
 import { getSubtitles, SubtitleItem } from 'youtube-captions-scraper';
 
+const PYTHON_BACKEND_URL = process.env.PYTHON_BACKEND_URL || 'http://localhost:5002';
+
 interface CaptionTrack {
   languageCode: string;
   kind?: string;
@@ -643,7 +645,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid YouTube URL' }, { status: 400 });
     }
     // Call the Python microservice on port 5002
-    const response = await fetch('http://localhost:5002/transcript', {
+    const response = await fetch(`${PYTHON_BACKEND_URL}/transcript`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ video_id: videoId }),
