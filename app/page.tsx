@@ -204,40 +204,40 @@ export default function Home() {
           Enter a YouTube video URL to analyze its content with AI. This app fetches the transcript, generates a smart section breakdown, enables semantic chat, and lets you search for specific moments in the video using natural language queries. All results include clickable timestamps for easy navigation.
         </p>
         <div className="flex flex-col items-center mb-8">
-          <form
-            className="flex flex-col sm:flex-row items-center justify-center gap-2 mb-8 w-full max-w-xl"
-            onSubmit={e => { e.preventDefault(); fetchTranscript(); }}
+        <form
+          className="flex flex-col sm:flex-row items-center justify-center gap-2 mb-8 w-full max-w-xl"
+          onSubmit={e => { e.preventDefault(); fetchTranscript(); }}
+        >
+          <input
+            type="text"
+            placeholder="Enter YouTube URL"
+            value={videoUrl}
+            onChange={e => setVideoUrl(e.target.value)}
+            className="flex-1 max-w-md rounded-md px-4 py-2 bg-neutral-800 text-white placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-blue-400 text-center"
+          />
+          <button
+            type="submit"
+            disabled={loading || !videoUrl}
+            className="rounded-md px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-neutral-700 disabled:cursor-not-allowed text-white font-semibold transition"
           >
-            <input
-              type="text"
-              placeholder="Enter YouTube URL"
-              value={videoUrl}
-              onChange={e => setVideoUrl(e.target.value)}
-              className="flex-1 max-w-md rounded-md px-4 py-2 bg-neutral-800 text-white placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-blue-400 text-center"
+            {loading ? 'Loading...' : 'Analyze Video'}
+          </button>
+        </form>
+        {videoId && (
+          <div className="mb-8 flex justify-center w-full">
+            <iframe
+              ref={videoRef}
+              width="100%"
+              height="315"
+              src={`https://www.youtube.com/embed/${videoId}`}
+              title="YouTube video player"
+              frameBorder="0"
+              allow="autoplay; encrypted-media"
+              allowFullScreen
+              className="rounded-lg w-full max-w-2xl aspect-video"
             />
-            <button
-              type="submit"
-              disabled={loading || !videoUrl}
-              className="rounded-md px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-neutral-700 disabled:cursor-not-allowed text-white font-semibold transition"
-            >
-              {loading ? 'Loading...' : 'Analyze Video'}
-            </button>
-          </form>
-          {videoId && (
-            <div className="mb-8 flex justify-center w-full">
-              <iframe
-                ref={videoRef}
-                width="100%"
-                height="315"
-                src={`https://www.youtube.com/embed/${videoId}`}
-                title="YouTube video player"
-                frameBorder="0"
-                allow="autoplay; encrypted-media"
-                allowFullScreen
-                className="rounded-lg w-full max-w-2xl aspect-video"
-              />
-            </div>
-          )}
+          </div>
+        )}
         </div>
         {/* Main content: Sections | Transcript | Chat */}
         {hasFetched && (

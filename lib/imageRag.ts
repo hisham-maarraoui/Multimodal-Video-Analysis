@@ -31,19 +31,19 @@ export async function extractFrames(videoPath: string, outputDir: string, fps = 
       // Dynamically import ffmpeg only when needed
       const ffmpeg = require('@ffmpeg-installer/ffmpeg');
       
-      if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
-      const args = ['-i', videoPath, '-vf', `fps=${fps}`, path.join(outputDir, 'frame-%04d.jpg')];
+    if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
+    const args = ['-i', videoPath, '-vf', `fps=${fps}`, path.join(outputDir, 'frame-%04d.jpg')];
       const ffmpegProcess = spawn(ffmpeg.path, args);
       ffmpegProcess.on('close', (code) => {
-        if (code === 0) {
-          const files = fs.readdirSync(outputDir)
-            .filter(f => f.endsWith('.jpg'))
-            .map(f => path.join(outputDir, f));
-          resolve(files);
-        } else {
-          reject(new Error('ffmpeg failed'));
-        }
-      });
+      if (code === 0) {
+        const files = fs.readdirSync(outputDir)
+          .filter(f => f.endsWith('.jpg'))
+          .map(f => path.join(outputDir, f));
+        resolve(files);
+      } else {
+        reject(new Error('ffmpeg failed'));
+      }
+    });
     } catch (error) {
       reject(new Error(`Failed to load ffmpeg: ${error}`));
     }
